@@ -5,6 +5,7 @@ export type {Identity as IdentityV1} from "./v1";
 export {newIdentity as newIdentityV1} from "./v1";
 
 export type {IdentityType} from "./identityType";
+export {parser as identityTypeParser} from "./identityType";
 
 export type {Login} from "./login";
 export {loginFromString, parser as loginParser} from "./login";

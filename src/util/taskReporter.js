@@ -13,6 +13,12 @@ export interface TaskReporter {
   finish(taskId: TaskId): TaskReporter;
 }
 
+type LoggingReporterOptions = {|
+  +consoleLog?: ConsoleLog,
+  +getTime?: GetTime,
+  +scopedPrefix?: string,
+|};
+
 /**
  * This class is a lightweight utility for reporting task progress to the
  * command line.
@@ -29,20 +35,32 @@ export class LoggingTaskReporter implements TaskReporter {
   activeTasks: Map<TaskId, MsSinceEpoch>;
   _consoleLog: ConsoleLog;
   _getTime: GetTime;
+  _prefix: string;
 
-  constructor(consoleLog?: ConsoleLog, getTime?: GetTime) {
-    this._consoleLog = consoleLog || console.log;
+  constructor(
+    opts: LoggingReporterOptions = {
+      consoleLog: undefined,
+      getTime: undefined,
+      scopedPrefix: undefined,
+    }
+  ) {
+    this._consoleLog = opts.consoleLog || console.log;
     this._getTime =
-      getTime ||
+      opts.getTime ||
       function () {
         return +new Date();
       };
     this.activeTasks = new Map();
+    this._prefix = opts.scopedPrefix ? `${opts.scopedPrefix}: ` : "";
+  }
+
+  _scopedTask(taskId: TaskId): string {
+    return `${this._prefix}${taskId}`;
   }
 
   start(taskId: TaskId) {
     if (this.activeTasks.has(taskId)) {
-      throw new Error(`task ${taskId} already registered`);
+      throw new Error(`task ${this._scopedTask(taskId)} already registered`);
     }
     this.activeTasks.set(taskId, this._getTime());
     this._consoleLog(startMessage(taskId));
@@ -52,7 +70,7 @@ export class LoggingTaskReporter implements TaskReporter {
   finish(taskId: TaskId) {
     const startTime = this.activeTasks.get(taskId);
     if (startTime == null) {
-      throw new Error(`task ${taskId} not registered`);
+      throw new Error(`task ${this._scopedTask(taskId)} not registered`);
     }
     const elapsedTime = this._getTime() - startTime;
     this._consoleLog(finishMessage(taskId, elapsedTime));

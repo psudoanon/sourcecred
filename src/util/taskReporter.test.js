@@ -47,7 +47,11 @@ describe("util/taskReporter", () => {
           this.messages.push(x);
         };
         const timeMock = () => this._time;
-        this.taskReporter = new LoggingTaskReporter(logMock, timeMock);
+        this.taskReporter = new LoggingTaskReporter({
+          consoleLog: logMock,
+          getTime: timeMock,
+          scopedPrefix: "scope/mock",
+        });
       }
       start(task: string) {
         this.taskReporter.start(task);
@@ -65,16 +69,16 @@ describe("util/taskReporter", () => {
 
     it("errors when finishing an unregistered task", () => {
       const fail = () => new TestCase().finish("foo");
-      expect(fail).toThrowError("task foo not registered");
+      expect(fail).toThrowError("task scope/mock: foo not registered");
     });
     it("errors when starting a task twice", () => {
       const fail = () => new TestCase().start("foo").start("foo");
-      expect(fail).toThrowError("task foo already registered");
+      expect(fail).toThrowError("task scope/mock: foo already registered");
     });
     it("errors when finishing a task twice", () => {
       const fail = () =>
         new TestCase().start("foo").finish("foo").finish("foo");
-      expect(fail).toThrowError("task foo not registered");
+      expect(fail).toThrowError("task scope/mock: foo not registered");
     });
 
     it("works for a task that immediately finishes", () => {
